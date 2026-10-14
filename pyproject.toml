@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "threedmouse"
+version = "0.1.0"
+description = "Driverless 6-DoF (+ buttons) from a 3Dconnexion SpaceMouse, as a library and a CLI."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Matvey Boguslavskiy" }]
+keywords = ["3dconnexion", "spacemouse", "6dof", "hid", "robotics", "input"]
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: MacOS",
+    "Topic :: System :: Hardware :: Hardware Drivers",
+]
+dependencies = [
+    "hidapi>=0.14",
+]
+
+[project.scripts]
+"3dmouse" = "threedmouse.cli:main"
+threedmouse = "threedmouse.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/bogumat/3dmouse"
+Repository = "https://github.com/bogumat/3dmouse"
+Issues = "https://github.com/bogumat/3dmouse/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/threedmouse"]
+
+[tool.uv]
+# keep the dev venv reproducible
+package = true
