@@ -20,4 +20,4 @@ from .core import (
 )
 
 __all__ = ["SpaceMouse", "State", "DEFAULT_VID", "DEFAULT_PID", "DEFAULT_FULL_SCALE"]
-__version__ = "0.1.0"
+__version__ = "0.2.0"

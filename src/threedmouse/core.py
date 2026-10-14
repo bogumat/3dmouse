@@ -40,6 +40,13 @@ DEFAULT_VID = 0x256F
 DEFAULT_PID = 0xC635
 DEFAULT_FULL_SCALE = 350.0
 
+# Axis-sign calibration (measured on a SpaceMouse Compact) that normalizes the
+# raw device signs to an intuitive right-handed frame:
+#   +x = slide right,  +y = slide forward/away,  +z = lift up
+#   +a = pitch (front edge down),  +b = roll (right edge down),  +c = yaw (CCW from above)
+# Order: tx, ty, tz, rx, ry, rz.
+_SIGNS = (1, -1, -1, 1, -1, -1)
+
 _HELPER_APP = "/Applications/3DconnexionHelper.app"
 _HELPER_BIN = "3DconnexionHelper.app/Contents/MacOS/3DconnexionHelper"
 _IS_MAC = platform.system() == "Darwin"
@@ -51,11 +58,12 @@ def _clamp(v: float) -> float:
 
 @dataclass(frozen=True)
 class State:
-    """One 6-DoF + button sample.
+    """One 6-DoF + button sample, in the calibrated right-handed convention
+    (+x right, +y forward, +z up; +a/+b/+c = pitch/roll/yaw).
 
-    ``tx..rz`` are the raw signed int16 device values (roughly ``±full_scale``);
-    ``x, y, z, a, b, c`` are those normalized to ``[-1, 1]``.
-    ``a, b, c`` are the rotations ``rx, ry, rz``.
+    ``tx..rz`` are signed int16 (roughly ``±full_scale``); ``x, y, z, a, b, c``
+    are those normalized to ``[-1, 1]``. ``a, b, c`` are the rotations
+    ``rx, ry, rz``.
     """
 
     tx: int = 0
@@ -245,9 +253,13 @@ class SpaceMouse:
             if r:
                 rid = r[0]
                 if rid == 1 and len(r) >= 7:
-                    tx = _s16(r[1], r[2]); ty = _s16(r[3], r[4]); tz = _s16(r[5], r[6])
+                    tx = _SIGNS[0] * _s16(r[1], r[2])
+                    ty = _SIGNS[1] * _s16(r[3], r[4])
+                    tz = _SIGNS[2] * _s16(r[5], r[6])
                 elif rid == 2 and len(r) >= 7:
-                    rx = _s16(r[1], r[2]); ry = _s16(r[3], r[4]); rz = _s16(r[5], r[6])
+                    rx = _SIGNS[3] * _s16(r[1], r[2])
+                    ry = _SIGNS[4] * _s16(r[3], r[4])
+                    rz = _SIGNS[5] * _s16(r[5], r[6])
                 elif rid == 3:
                     buttons = int.from_bytes(bytes(r[1:]), "little")
                 else:

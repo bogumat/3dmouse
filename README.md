@@ -10,13 +10,20 @@ $ 3dmouse
 +0.0000,+0.0000,+0.0000,+0.0000,+0.0000,+0.0000,1,0   # left button held
 ```
 
-Fields: `x,y,z,a,b,c,left,right`
+Fields: `x,y,z,a,b,c,left,right`, normalized to `[-1, 1]` (full-scale ≈ ±350).
 
-- `x, y, z` — translation (push / pull / lift)
-- `a, b, c` — rotation `rx, ry, rz` (tilt / twist)
-- `left, right` — button states (`0`/`1`)
+Axes use a calibrated right-handed convention:
 
-Axes are normalized to `[-1, 1]` (full-scale deflection ≈ ±350 raw units).
+| axis | `+` direction |
+|---|---|
+| `x` | slide **right** |
+| `y` | slide **forward / away** |
+| `z` | lift **up** |
+| `a` | pitch — **front edge down** |
+| `b` | roll — **right edge down** |
+| `c` | yaw — **twist left** (CCW from above) |
+
+`left, right` are the two button states (`0`/`1`).
 
 ## Install
 
