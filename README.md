@@ -1,8 +1,9 @@
 # 3dmouse
 
-Read **6-DoF motion + buttons** from a 3Dconnexion SpaceMouse on macOS — a small
-Python library for driving 3D views, cameras and robots, plus a `3dmouse` CLI
-that streams CSV.
+Read **6-DoF motion + buttons** from a 3Dconnexion SpaceMouse — a small Python
+library for driving 3D views, cameras and robots, plus a `3dmouse` CLI that
+streams CSV. Works on macOS, Linux and Windows (see
+[Platform support](#platform-support)).
 
 ```
 $ 3dmouse
@@ -103,13 +104,8 @@ manager, `state` / `read()` (latch), `stream()` (generator).
 
 ## How it works
 
-On macOS the 3DxWare driver holds the SpaceMouse open and only routes it to the
-foreground GUI app, so a terminal tool can't read it through the normal
-channels. `3dmouse` therefore stops the driver's `3DconnexionHelper`, reads the
-device's raw HID reports directly (the layout below, reverse engineered), and
-relaunches the helper on exit — on `close()`, `Ctrl-C`, `SIGTERM`, or process
-exit. No admin required and nothing permanent changes; while `3dmouse` runs, the
-official 3DxWare apps don't receive input.
+It reads the device's raw HID input reports directly and decodes them (layout
+below, reverse engineered):
 
 ```
 report id 0x01 -> Tx, Ty, Tz        (3× signed int16 LE, translation)
@@ -120,6 +116,26 @@ report id 0x03 -> button bitmask    (bit 0 = left, bit 1 = right)
 Tested with a **SpaceMouse Compact** (`VID 0x256F / PID 0xC635`). Other models
 share the report layout but use different PIDs — pass `--pid` / `pid=`.
 
+## Platform support
+
+The reading is cross-platform (via `hidapi`). The one OS-specific wrinkle is
+getting exclusive access to the device:
+
+- **macOS** — the 3DxWare driver holds the SpaceMouse open and only routes it to
+  the foreground app, so `3dmouse` stops the driver's `3DconnexionHelper` while
+  running and relaunches it on exit (`close()`, `Ctrl-C`, `SIGTERM`, or process
+  exit). No admin needed; nothing permanent changes. Disable with
+  `--no-takeover` / `takeover=False`.
+- **Linux** — reads `/dev/hidraw*` directly; no take-over. You may need read
+  permission (a udev rule for the device, or run as root). `spacenavd` does not
+  need to be running.
+- **Windows** — reads the HID device directly alongside the 3DxWare driver; no
+  take-over.
+
+> Developed and verified on macOS with a SpaceMouse Compact. Linux/Windows use
+> the same code path (hidapi read + the report layout above) but have not been
+> hardware-tested here.
+
 ## Development
 
 ```sh
@@ -129,8 +145,8 @@ uv sync
 uv run 3dmouse
 ```
 
-If a `3dmouse` process is killed with `SIGKILL` (bypassing cleanup), restore the
-driver manually: `open /Applications/3DconnexionHelper.app`.
+If a `3dmouse` process is killed with `SIGKILL` (bypassing cleanup) on macOS,
+restore the driver manually: `open /Applications/3DconnexionHelper.app`.
 
 ## License
 

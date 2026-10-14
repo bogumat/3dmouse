@@ -127,11 +127,15 @@ def _helper_running() -> bool:
 
 
 def _stop_helper() -> None:
+    if not _IS_MAC:
+        return
     subprocess.run(["pkill", "-f", f"open -W {_HELPER_APP}"], stderr=subprocess.DEVNULL)
     subprocess.run(["pkill", "-f", _HELPER_BIN], stderr=subprocess.DEVNULL)
 
 
 def _start_helper() -> None:
+    if not _IS_MAC:
+        return
     subprocess.run(["open", _HELPER_APP], stderr=subprocess.DEVNULL)
 
 
@@ -210,6 +214,9 @@ class SpaceMouse:
         hint = ""
         if _IS_MAC and _helper_running():
             hint = " (the 3Dconnexion driver still holds it — takeover may have failed)"
+        elif platform.system() == "Linux":
+            hint = (" (on Linux this usually means no permission to read the HID "
+                    "device — add a udev rule for /dev/hidraw*, or run as root)")
         raise RuntimeError(f"could not open SpaceMouse {self.vid:#06x}:{self.pid:#06x}"
                            f"{hint}: {last}")
 
