@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "threedmouse"
-version = "0.2.1"
+version = "0.3.0"
 description = "Driverless 6-DoF (+ buttons) from a 3Dconnexion SpaceMouse, as a library and a CLI."
 readme = "README.md"
 requires-python = ">=3.9"

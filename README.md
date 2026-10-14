@@ -87,6 +87,68 @@ Options: `vid`, `pid`, `full_scale`, `takeover` (`"auto"` | `True` | `False`),
 `on_event`, `queue_size`, `open_timeout`. Methods: `open()`, `close()`, context
 manager, `state` / `read()` (latch), `stream()` (generator).
 
+## Mapping — shape & route outputs
+
+`Mapper` reshapes each axis and binds buttons to callbacks, configured with
+plain data (kwargs, a dict, or a JSON/TOML file) so you can tune it without
+editing code.
+
+```python
+from threedmouse import SpaceMouse, Mapper
+
+mapper = Mapper(
+    deadzone=0.08,                              # applied to every axis
+    axes={
+        "x": {"gain": 2.0},                     # faster pan
+        "c": {"curve": 1.6},                    # finer yaw near centre
+        "z": {"source": "y", "invert": True},   # feed device Y into Z, flipped
+    },
+    buttons={
+        "left":  {"on_press": lambda: robot.grip()},
+        "right": {"on_hold":  lambda: robot.boost()},
+    },
+)
+
+with SpaceMouse() as m:
+    for s in m.stream():
+        out = mapper.apply(s)       # out.x … out.c shaped; fires button callbacks
+        robot.twist(*out.values)
+```
+
+Per-axis options (global defaults + per-axis overrides in `axes`):
+
+| option | effect |
+|---|---|
+| `source` | read a different input axis (remap), e.g. `"z": {"source": "y"}` |
+| `invert` | flip sign |
+| `deadzone` | ignore inputs below this magnitude, rescaling the rest to `[-1,1]` |
+| `curve` | response exponent; `>1` = finer near centre |
+| `gain` | scale (may exceed 1 for velocity targets) |
+| `clamp` | `[lo, hi]` limit after gain |
+
+Button events: `on_press`, `on_release`, `on_hold`.
+
+Load shaping from a file (axes only — set button callbacks in code):
+
+```python
+mapper = Mapper.from_file("mapping.toml")
+```
+
+```toml
+# mapping.toml
+deadzone = 0.08
+[axes.x]
+gain = 2.0
+[axes.c]
+curve = 1.6
+```
+
+The CLI applies the same file with `--config`:
+
+```sh
+3dmouse --config mapping.toml
+```
+
 ## CLI
 
 ```
@@ -97,6 +159,7 @@ manager, `state` / `read()` (latch), `stream()` (generator).
 3dmouse --rate 60       # cap output rate (default 125 Hz)
 3dmouse --precision 3   # decimals for normalized output
 3dmouse --no-takeover   # don't stop the driver (if the device is already free)
+3dmouse --config m.toml # shape axes via a JSON/TOML mapping file (see Mapping)
 3dmouse --vid 0x256f --pid 0xc635 --full-scale 350
 ```
 

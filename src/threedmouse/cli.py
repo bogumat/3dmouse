@@ -31,6 +31,9 @@ def _build_parser() -> argparse.ArgumentParser:
                     help=f"raw value at full deflection (default {DEFAULT_FULL_SCALE:g})")
     ap.add_argument("--no-takeover", action="store_true",
                     help="do not stop the 3Dconnexion driver (use if the device is already free)")
+    ap.add_argument("--config", metavar="FILE",
+                    help="JSON/TOML mapping file to shape the axes "
+                         "(per-axis deadzone / gain / curve / invert / source remap)")
     return ap
 
 
@@ -44,8 +47,23 @@ def main(argv=None) -> int:
 
     prec = args.precision
 
-    def fmt(s) -> str:
+    mapper = None
+    if args.config:
+        from .mapping import Mapper
+        try:
+            mapper = Mapper.from_file(args.config)
+        except Exception as e:
+            print(f"[3dmouse] bad --config: {e}", file=sys.stderr)
+            return 2
         if args.raw:
+            print("[3dmouse] --config shapes normalized values; --raw ignored",
+                  file=sys.stderr)
+
+    def fmt(s) -> str:
+        if mapper is not None:
+            m = mapper.apply(s)
+            line = ",".join(f"{v:+.{prec}f}" for v in m.values)
+        elif args.raw:
             line = ",".join(str(v) for v in s.raw)
         else:
             line = ",".join(f"{v:+.{prec}f}" for v in s.normalized)

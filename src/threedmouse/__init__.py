@@ -18,6 +18,10 @@ from .core import (
     DEFAULT_PID,
     DEFAULT_FULL_SCALE,
 )
+from .mapping import Mapper, Mapped, AxisSpec, AXES
 
-__all__ = ["SpaceMouse", "State", "DEFAULT_VID", "DEFAULT_PID", "DEFAULT_FULL_SCALE"]
-__version__ = "0.2.1"
+__all__ = [
+    "SpaceMouse", "State", "DEFAULT_VID", "DEFAULT_PID", "DEFAULT_FULL_SCALE",
+    "Mapper", "Mapped", "AxisSpec", "AXES",
+]
+__version__ = "0.3.0"
